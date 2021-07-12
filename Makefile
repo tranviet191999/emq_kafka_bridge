@@ -1,26 +1,40 @@
-PROJECT = emq_kafka_bridge
-PROJECT_DESCRIPTION = EMQ Kafka Bridge
-PROJECT_VERSION = 2.3.11
+## shallow clone for speed
 
-DEPS = ekaf
-dep_ekaf = git https://github.com/helpshift/ekaf master
+PROJECT = emqx_kafka_bridge
+PROJECT_DESCRIPTION = EMQ X kafka bridge Plugin
+PROJECT_VERSION = 3.2.2
 
+REBAR_GIT_CLONE_OPTIONS += --depth 1
+export REBAR_GIT_CLONE_OPTIONS
 
-BUILD_DEPS = emqttd cuttlefish
-dep_emqttd = git https://github.com/emqtt/emqttd master
-dep_cuttlefish = git https://github.com/emqtt/cuttlefish
+REBAR = rebar3
+all: compile
 
-ERLC_OPTS += +debug_info
-ERLC_OPTS += +'{parse_transform, lager_transform}'
-# TEST_ERLC_OPTS += +'{parse_transform, lager_transform}'
+compile:
+	$(REBAR) compile
 
-NO_AUTOPATCH = cuttlefish
+clean: distclean
 
-COVER = true
+ct: compile
+	$(REBAR) as test ct -v
 
-include erlang.mk
+clean: distclean
 
-app:: rebar.config
+eunit: compile
+	$(REBAR) as test eunit
 
-app.config::
-	./deps/cuttlefish/cuttlefish -l info -e etc/ -c etc/emq_kafka_bridge.conf -i priv/emq_kafka_bridge.schema -d data
+xref:
+	$(REBAR) xref
+
+distclean:
+	@rm -rf _build
+	@rm -f data/app.*.config data/vm.*.args rebar.lock
+
+CUTTLEFISH_SCRIPT = _build/default/lib/cuttlefish/cuttlefish
+
+$(CUTTLEFISH_SCRIPT):
+	@${REBAR} get-deps
+	@if [ ! -f cuttlefish ]; then make -C _build/default/lib/cuttlefish; fi
+
+app.config: $(CUTTLEFISH_SCRIPT) etc/emqx_kafka_bridge.conf
+	$(verbose) $(CUTTLEFISH_SCRIPT) -l info -e etc/ -c etc/emqx_kafka_bridge.conf -i priv/emqx_kafka_bridge.schema -d data

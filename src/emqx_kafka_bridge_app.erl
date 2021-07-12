@@ -1,5 +1,4 @@
-%%--------------------------------------------------------------------
-%% Copyright (c) 2015-2017 Feng Lee <feng@emqtt.io>.
+%% Copyright (c) 2020 Ard ITC Co., Ltd. All Rights Reserved.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -12,20 +11,20 @@
 %% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
-%%--------------------------------------------------------------------
 
--module(emq_kafka_bridge_sup).
+-module(emqx_kafka_bridge_app).
 
--behaviour(supervisor).
+-behaviour(application).
 
-%% API
--export([start_link/0]).
+-emqx_plugin(?MODULE).
 
-%% Supervisor callbacks
--export([init/1]).
+%% Application callbacks
+-export([start/2, stop/1]).
 
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start(_StartType, _StartArgs) ->
+    {ok, Sup} = emqx_kafka_bridge_sup:start_link(),
+    emqx_kafka_bridge:load(application:get_all_env()),
+    {ok, Sup}.
 
-init([]) ->
-    {ok, { {one_for_one, 10, 100}, []} }.
+stop(_State) ->
+    emqx_kafka_bridge:unload().

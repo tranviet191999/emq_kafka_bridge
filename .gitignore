@@ -9,5 +9,7 @@ rel/example_project
 .concrete/DEV_MODE
 .rebar
 .erlang.mk/
-emq_kafka_bridge.d
+emq_plugin_template.d
 /.idea
+/_build
+.DS_Store
